@@ -1,6 +1,6 @@
 {
   "name": "passport-selfkey",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Login with SelfKey authentication strategy for Passport.",
   "keywords": [
     "passport",
