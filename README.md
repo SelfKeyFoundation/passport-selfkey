@@ -20,16 +20,17 @@ public key.  The strategy requires a `verify` callback, which accepts these
 credentials and calls `done` providing a user.
 
 ```js
-passport.use(new SelfKeyStrategy(
-  function(signature, pubKey, done) {
-    User.findOne({ value: nonce }, function (err, user) {
-      if (err) { return done(err); }
-      if (!user) { return done(null, false); }
-      if (!user.verifySignature(signature)) { return done(null, false); }
-      return done(null, user);
-    });
-  }
-));
+passport.use(new SelfKeyStrategy((nonce, signature, pubKey, done) => {
+  User.findOne({nonce: nonce}, (err, user) => {
+    if (err) { return done(err) }
+    if (!user) {
+      return done(null, false, { msg: `Nonce ${nonce} not found.` })
+    }
+    var match = verifySignature(nonce, signature, pubKey)
+    if (match) return done(null, user)
+    return done(null, false, { msg: 'Invalid credentials.' })
+  })
+}))
 ```
 
 #### Authenticate Requests
@@ -41,10 +42,10 @@ For example, as route middleware in an [Express](http://expressjs.com/)
 application:
 
 ```js
-app.post('/login', 
-  passport.authenticate('selfkey', { failureRedirect: '/login' }),
+app.get('/auth', 
+  passport.authenticate('selfkey', { failureRedirect: '/signup' }),
   function(req, res) {
-    res.redirect('/');
+    res.redirect('/success');
   });
 ```
 
