@@ -1,0 +1,33 @@
+{
+  "name": "passport-selfkey",
+  "version": "1.0.0",
+  "description": "Login with SelfKey authentication strategy for Passport.",
+  "keywords": [
+    "passport",
+    "selfkey",
+    "authentication"
+  ],
+  "author": {
+    "name": "SelfKey Foundation",
+    "email": "ben@selfkey.org",
+    "url": "https://selfkey.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/altninja/passport-selfkey.git"
+  },
+  "bugs": {
+    "url": "http://github.com/altninja/passport-selfkey/issues"
+  },
+  "license": "MIT",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://www.opensource.org/licenses/MIT"
+    }
+  ],
+  "main": "./lib",
+  "dependencies": {
+    "passport-strategy": "1.x.x"
+  }
+}
