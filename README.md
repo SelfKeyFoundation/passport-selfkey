@@ -24,77 +24,80 @@ const SelfKeyStrategy = require('passport-selfkey').Strategy
  * Login with SelfKey Passport Config
  */
 passport.use(new SelfKeyStrategy((req, challenge, signature, pubKey, done) => {
-  console.log(pubKey)
-  // check for an existing session
-  if (req.user) {
-    // query db for matching pubkey
-    User.findOne({'selfkey.wallets.pubKey': pubKey}, (err, existingUser) => {
-      if (err) { return done(err) }
-      // if a pubkey exists verify the signature
-      if (existingUser) {
-        var match = selfkey.verifySignature(challenge, signature, pubKey)
-        if (match) {
-          return done(null, existingUser)
+  // if the verification succeeds
+  if (selfkey.verifySignature(challenge, signature, pubKey)) {
+    // check if ession exists
+    if (req.user) {
+      // find user with existing wallet
+      User.findOne({'selfkey.wallets.pubKey': pubKey}, (err, existingUser) => {
+        if (err) { return done(err) }
+        // if a wallet is found then  
+        if (existingUser) {
+            // handle UI message
+            req.flash('info', { msg: 'Login with SelfKey ID successful' })
+            // handle authentication
+            return done(null, existingUser)       
+        } else {
+          // search by session user id
+          User.findOne({_id: req.user.id}, (err, user) => {
+            if (err) { return done(err) }
+              // update existing user
+              User.update({_id: req.user.id}, {
+                $addToSet: {
+                  'selfkey.wallets': {
+                    pubKey: pubKey, 
+                    first_name: req.query.first_name,
+                    middle_name: req.query.middle_name,
+                    last_name: req.query.last_name,
+                    email: req.query.email || '',
+                    country_of_residency: req.query.country_of_residency
+                  }
+                }
+              }, (err, result) => {
+                if (err) { return done(err) }
+                User.findOne({_id: req.user.id}, (err, user) => {
+                  if (err) { return done(err) }
+                  req.flash('info', { msg: 'SelfKey ID has successfully been linked to your account' })
+                  return done(err, user)
+                })
+              })  
+          })
         }
-        return done(null, false, {msg: 'Invalid Credentials'})
-      } else {
-        // search by session user id
-        User.findById(req.user.id, (err, user) => {
-          if (err) { return done(err) }
-          User.update({'selfkey.wallets.pubKey': pubKey},{ 
-            'selfkey.wallets.$.first_name': req.query.first_name,
-            'selfkey.wallets.$.middle_name': req.query.middle_name,
-            'selfkey.wallets.$.last_name': req.query.last_name,
-            'selfkey.wallets.$.email': req.query.email,
-            'selfkey.wallets.$.country_of_residency': req.query.country_of_residency
-          }, (err, result) => {
-            req.flash('info', { msg: 'SelfKey ID has been linked.' })
-            done(err, user)
-          })    
-        })
-      }
-    })
+      })
+    // no session exists
+    } else {
+      // find user with existing wallet
+      User.findOne({'selfkey.wallets.pubKey': pubKey}, (err, existingUser) => {
+        if (err) { return done(err) }
+        // if a wallet is found then verify the signature handle authentication
+        if (existingUser) {
+          req.flash('info', { msg: 'Login with SelfKey ID successful' })
+          return done(null, existingUser)
+        } else {
+          // make a new user
+          const newUser = {
+              'selfkey.wallets': 
+                {
+                  pubKey: pubKey,
+                  first_name: req.query.first_name,
+                  middle_name: req.query.middle_name,
+                  last_name: req.query.last_name,
+                  email: req.query.email || '',
+                  country_of_residency: req.query.country_of_residency
+                } 
+              }
+          User.create(newUser, (err, user) => {
+            if (err) { return done(err) }
+            req.flash('info', { msg: 'New account with SelfKey ID has successfully been created' })
+            return done(err, user)
+          })
+        }
+      })
+    }
+  
   } else {
-    // if no session exists
-    User.findOne({'selfkey.wallets.pubKey': pubKey}, (err, existingUser) => {
-      if (err) { return done(err) }
-      // check for matching user and verify signature and update user object
-      if (existingUser) {
-        var match = selfkey.verifySignature(challenge, signature, pubKey)
-        if (match) {
-          User.update({'selfkey.wallets.pubKey': pubKey},{ 
-            'selfkey.wallets.$.first_name': req.query.first_name,
-            'selfkey.wallets.$.middle_name': req.query.middle_name,
-            'selfkey.wallets.$.last_name': req.query.last_name,
-            'selfkey.wallets.$.email': req.query.email,
-            'selfkey.wallets.$.country_of_residency': req.query.country_of_residency
-          }, (err, result) => {
-            req.flash('info', { msg: 'SelfKey ID has been linked.' })
-            return done(null, existingUser)
-          })    
-        }     
-      } else {
-        // make a new user
-        const 
-          challenge = selfkey.newChallenge(256)
-          newUser = {
-            'selfkey.wallets': 
-              {
-                challenge: challenge, 
-                pubKey: pubKey,
-                first_name: req.query.first_name,
-                middle_name: req.query.middle_name,
-                last_name: req.query.last_name,
-                email: req.query.email,
-                country_of_residency: req.query.country_of_residency
-              } 
-            }
-        console.log(newUser)
-        User.create(newUser, err => {
-          done(err, user)
-        })
-      }
-    })
+    // return error message if verification fails
+    return done(null, false, {msg: 'Invalid Credentials'})
   }
 }))
 ```
