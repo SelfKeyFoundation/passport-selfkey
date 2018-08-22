@@ -23,81 +23,27 @@ const SelfKeyStrategy = require('passport-selfkey').Strategy
 /**
  * Login with SelfKey Passport Config
  */
-passport.use(new SelfKeyStrategy((req, challenge, signature, pubKey, done) => {
-  // if the verification succeeds
-  if (selfkey.verifySignature(challenge, signature, pubKey)) {
-    // check if ession exists
-    if (req.user) {
-      // find user with existing wallet
-      User.findOne({'selfkey.wallets.pubKey': pubKey}, (err, existingUser) => {
-        if (err) { return done(err) }
-        // if a wallet is found then  
-        if (existingUser) {
-            // handle UI message
-            req.flash('info', { msg: 'Login with SelfKey ID successful' })
-            // handle authentication
-            return done(null, existingUser)       
-        } else {
-          // search by session user id
-          User.findOne({_id: req.user.id}, (err, user) => {
-            if (err) { return done(err) }
-              // update existing user
-              User.update({_id: req.user.id}, {
-                $addToSet: {
-                  'selfkey.wallets': {
-                    pubKey: pubKey, 
-                    first_name: req.query.first_name,
-                    middle_name: req.query.middle_name,
-                    last_name: req.query.last_name,
-                    email: req.query.email || '',
-                    country_of_residency: req.query.country_of_residency
-                  }
-                }
-              }, (err, result) => {
-                if (err) { return done(err) }
-                User.findOne({_id: req.user.id}, (err, user) => {
-                  if (err) { return done(err) }
-                  req.flash('info', { msg: 'SelfKey ID has successfully been linked to your account' })
-                  return done(err, user)
-                })
-              })  
-          })
-        }
-      })
-    // no session exists
-    } else {
-      // find user with existing wallet
-      User.findOne({'selfkey.wallets.pubKey': pubKey}, (err, existingUser) => {
-        if (err) { return done(err) }
-        // if a wallet is found then verify the signature handle authentication
-        if (existingUser) {
-          req.flash('info', { msg: 'Login with SelfKey ID successful' })
-          return done(null, existingUser)
-        } else {
-          // make a new user
-          const newUser = {
-              'selfkey.wallets': 
-                {
-                  pubKey: pubKey,
-                  first_name: req.query.first_name,
-                  middle_name: req.query.middle_name,
-                  last_name: req.query.last_name,
-                  email: req.query.email || '',
-                  country_of_residency: req.query.country_of_residency
-                } 
-              }
-          User.create(newUser, (err, user) => {
-            if (err) { return done(err) }
-            req.flash('info', { msg: 'New account with SelfKey ID has successfully been created' })
-            return done(err, user)
-          })
-        }
-      })
-    }
-  
+passport.use(new SelfKeyStrategy((req, nonce, signature, pubKey, done) => {
+  // if the signature verification succeeds
+  if (selfkey.verifySignature(nonce, signature, pubKey)) {
+    // find user with existing wallet
+    User.findOne({wallet: pubKey}, (err, existingUser) => {
+      if (err) return done(err) 
+      // if a wallet is found then add token to user object
+      if (existingUser) {
+        const token = generateToken()
+        User.update({wallet: pubKey}, {token: token}, (err, user) => {
+          if (err) return done(err)
+          return done(null, user)
+        })
+      } else {
+        // no user with this address
+        return done(null, false)
+      }
+    })
   } else {
-    // return error message if verification fails
-    return done(null, false, {msg: 'Invalid Credentials'})
+    // verification fails
+    return done(null, false)
   }
 }))
 ```
@@ -109,11 +55,10 @@ Use `passport.authenticate()`, specifying the `'selfkey'` strategy, to authentic
 For example, as route middleware in an [Express](http://expressjs.com/) application:
 
 ```js
-  router.get('/auth/selfkey', passport.authenticate('selfkey', { failureRedirect: '/signup' }), (req, res) => {
-    res.redirect('/success')
-  })
+app.post('/auth/selfkey', passport.authenticate('selfkey', {session: false}), (req, res) => {
+  return res.status(200).json({message: 'Is Authenticated', successUrl: 'http://localhost:8080/success.html'})
+})
 ```
-
 
 ## License
 
