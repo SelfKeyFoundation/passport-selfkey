@@ -14,10 +14,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/SelfKeyFoudation/passport-selfkey.git"
+    "url": "git://github.com/SelfKeyFoundation/passport-selfkey.git"
   },
   "bugs": {
-    "url": "http://github.com/SelfKeyFoudation/passport-selfkey/issues"
+    "url": "http://github.com/SelfKeyFoundation/passport-selfkey/issues"
   },
   "license": "MIT",
   "licenses": [
