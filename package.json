@@ -1,11 +1,12 @@
 {
   "name": "passport-selfkey",
-  "version": "1.0.10",
-  "description": "Login with SelfKey authentication strategy for Passport.",
+  "version": "1.0.11",
+  "description": "Login with SelfKey strategy for PassportJS.",
   "keywords": [
     "passport",
     "selfkey",
-    "authentication"
+    "authentication",
+    "javascript"
   ],
   "author": {
     "name": "SelfKey Foundation",
@@ -19,11 +20,10 @@
   "bugs": {
     "url": "http://github.com/SelfKeyFoundation/passport-selfkey/issues"
   },
-  "license": "MIT",
   "licenses": [
     {
-      "type": "MIT",
-      "url": "http://www.opensource.org/licenses/MIT"
+      "type": "GPL-3.0",
+      "url": "http://www.opensource.org/licenses/GPL-3.0"
     }
   ],
   "main": "./lib",

@@ -7,7 +7,7 @@ This is the passport strategy for integrating Login with SelfKey authentication 
 ## Install
 
 ```bash
-$ npm i --save passport-selfkey selfkey.js
+$ npm install passport-selfkey
 ```
 
 ## Usage
@@ -23,9 +23,9 @@ const SelfKeyStrategy = require('passport-selfkey').Strategy
 /**
  * Login with SelfKey Passport Config
  */
-passport.use(new SelfKeyStrategy((req, nonce, signature, pubKey, done) => {
+passport.use(new SelfKeyStrategy((req, nonce, signature, publicKey, done) => {
   // if the signature verification succeeds
-  if (selfkey.verifySignature(nonce, signature, pubKey)) {
+  if (selfkey.verifySignature(nonce, signature, publicKey)) {
     // find user with existing wallet
     User.findOne({wallet: pubKey}, (err, existingUser) => {
       if (err) return done(err) 
