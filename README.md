@@ -61,7 +61,7 @@ app.post('/auth/selfkey', passport.authenticate('selfkey', {session: false}), (r
 ```
 
 ## License
-SelfKey JavaScript Server Library    
+SelfKey Passport Library    
 Copyright (c) 2018 SelfKey Foundation [https://selfkey.org/](https://selfkey.org/)
 
 [The GPL-3.0 License](http://opensource.org/licenses/GPL-3.0)
